@@ -9,7 +9,7 @@ translate = boto3.client(service_name='translate')
 
 def lambda_handler(event, context):
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
-
+    print ("entra en translate")
     # fetch todo from the database
     result = table.get_item(
         Key={
