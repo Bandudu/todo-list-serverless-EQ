@@ -22,7 +22,7 @@ def translate(event, context):
     # get translate service
     translateaws = boto3.client(service_name='translate', region_name='us-east-1')
     
-    translated_text = translateaws.translate_text(Text=result['Item']['text'], 
+    translated_text = translateaws.translate_text(Text=databaseItem['Item']['text'], 
                 SourceLanguageCode="auto", TargetLanguageCode=language)
     
     # translate text
