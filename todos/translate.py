@@ -1,22 +1,33 @@
 import os
 import json
-import decimalencoder
+
+from todos import decimalencoder
 import boto3
-
 dynamodb = boto3.resource('dynamodb')
-translateaws = boto3.client('translate')
 
+def translate(event, context):
 
-def lambda_handler(event, context):
+    # get target language from request
+    target_lang=event['pathParameters']['language']
+
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
-    print ("entra en translate")
+
     # fetch todo from the database
     result = table.get_item(
         Key={
             'id': event['pathParameters']['id']
         }
     )
-    result['Item']['text'] = translateaws.translate_text(Text=result['Item']['text'], SourceLanguageCode="auto", TargetLanguageCode=event['pathParameters']['language'])['TranslatedText']
+    
+        
+    # get translate service
+    translateaws = boto3.client(service_name='translate', region_name='us-east-1')
+    
+    translated_text = translateaws.translate_text(Text=result['Item']['text'], 
+                SourceLanguageCode="auto", TargetLanguageCode=target_lang)
+    
+    # translate text
+    result['Item']['text']=translated_text.get('TranslatedText')
 
     # create a response
     response = {
@@ -24,7 +35,5 @@ def lambda_handler(event, context):
         "body": json.dumps(result['Item'],
                            cls=decimalencoder.DecimalEncoder)
     }
-
-    result['Item']
 
     return response
