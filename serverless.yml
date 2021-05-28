@@ -25,6 +25,9 @@ provider:
         - comprehend:DetectDominantLanguage
       Resource: "*"
 
+plugins:
+  - serverless-sam
+
 functions:
   create:
     handler: todos/create.create

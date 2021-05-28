@@ -1,0 +1,220 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'SAM template for Practice Case 1 Unir Devops&Cloud '
+
+Parameters:
+  DATABASE_USERNAME:
+    Description: 'Required. The Database name'
+    Type: 'String'
+    Default: todoTable
+  ENVIRONMENT:
+    Description: 'Required. Environment'
+    Type: 'String'
+    Default: Develop
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    Variables:
+    DYNAMODB_TABLE: !Ref DATABASE_USERNAME
+    STAGE: !Ref ENVIRONMENT
+
+Resources:
+
+  TodosDynamoDbTable:
+    Type: 'AWS::DynamoDB::Table'
+    DeletionPolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: api-rest-dev
+  
+  CreateFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: create.create
+      Runtime: python3.8
+      CodeUri: /todos
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Sub "${Tabla}_${Stage}"
+      Events:
+        Create:
+          Type: Api
+          Properties:
+            Path: /todos
+            Method: post
+  
+  
+  ListFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: list.list
+      Runtime: python3.8
+      CodeUri: todos/
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Environment:
+        Variables:
+          DYNAMODB_TABLE:  !Sub "${Tabla}_${Stage}"
+      Events:
+        List:
+          Type: Api
+          Properties:
+            Path: /todos
+            Method: get
+
+  GetFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: get.get
+      Runtime: python3.8
+      CodeUri: todos/
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Sub "${Tabla}_${Stage}"
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: '/todos/{id}'
+            Method: get
+
+  UpdateFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: update.update
+      Runtime: python3.8
+      CodeUri: todos/
+       Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Sub "${Tabla}_${Stage}"
+      Events:
+        Update:
+          Type: Api
+          Properties:
+            Path: '/todos/{id}'
+            Method: put
+
+  DeleteFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: delete.delete
+      Runtime: python3.8
+      CodeUri: todos/
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Sub "${Tabla}_${Stage}"
+      Events:
+        Delete:
+          Type: Api
+          Properties:
+            Path: '/todos/{id}'
+            Method: delete
+
+  ApiRestDevTranslate:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: translate.translate
+      Runtime: python3.8
+      CodeUri: todos/
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
+                - 'dynamodb:GetItem'
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+                - 'dynamodb:DeleteItem'
+              Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            - Effect: Allow
+              Action:
+                - 'translate:TranslateText'
+                - 'comprehend:DetectDominantLanguage'
+              Resource: '*'
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Sub "${Tabla}_${Stage}"
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: '/todos/{id}/{lang}'
+            Method: get
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  TodoListApi:
+    Description: "API Gateway endpoint URL for Prod stage for TodoList function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  TodoListFunction:
+    Description: "TodoList Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+  TodoListFunctionIamRole:
+    Description: "Implicit IAM Role created for TodoList function"
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+
